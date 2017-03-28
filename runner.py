@@ -1,7 +1,7 @@
 import glob
 import unicodedata
 from os.path import basename, splitext
-
+import os
 import converter
 import uploader
 from uploader import *
