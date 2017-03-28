@@ -1,12 +1,10 @@
-import os
-from os.path import basename, splitext
 import glob
-import uploader
-import ntpath
-import converter
-from uploader import *
-from oauth2client.tools import argparser
 import unicodedata
+from os.path import basename, splitext
+
+import converter
+import uploader
+from uploader import *
 
 
 def normalize_caseless(text):
@@ -26,6 +24,7 @@ if __name__ == '__main__':
     argparser.add_argument("--keywords", help="Video keywords, comma separated", default="")
     argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES, default=VALID_PRIVACY_STATUSES[0],
                            help="Video privacy status.")
+    argparser.add_argument("--clientFile", default="client_secret.json", help="Location of the client secret file. See ")
     args = argparser.parse_args()
 
     if not os.path.exists(args.folder):
