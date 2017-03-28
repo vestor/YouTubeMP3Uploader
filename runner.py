@@ -24,8 +24,21 @@ if __name__ == '__main__':
     argparser.add_argument("--keywords", help="Video keywords, comma separated", default="")
     argparser.add_argument("--privacyStatus", choices=VALID_PRIVACY_STATUSES, default=VALID_PRIVACY_STATUSES[0],
                            help="Video privacy status.")
-    argparser.add_argument("--clientFile", default="client_secret.json", help="Location of the client secret file. See ")
+    argparser.add_argument("--clientFile", default="client_secret.json", help="Location of the client secret file. See https://developers.google.com/api-client-library/python/auth/web-app")
+    argparser.add_argument("--skipFolderRange", default=None,
+                           help="Specify the range of folders to skip. Ex: 1..10 or 1,2,4 or abc,cdef,1..100")
     args = argparser.parse_args()
+
+    folders_to_skip = []
+    if args.skipFolderRange:
+        uniques = args.skipFolderRange.split(",")
+        for unique in uniques:
+            if ".." in unique:
+                start_end = unique.split("..")
+                print start_end
+                folders_to_skip.extend(str(x) for x in range(int(start_end[0]), int(start_end[1])))
+            else:
+                folders_to_skip.append(unique)
 
     if not os.path.exists(args.folder):
         exit("Please specify a valid file using the --folder= parameter.")
@@ -36,6 +49,9 @@ if __name__ == '__main__':
     folders = next(os.walk(path))[1]
 
     for folder in folders:
+        if folder in folders_to_skip:
+            print 'Skipping folder ' + folder + '\n'
+            continue
         files_in_folder = glob.glob(path + '/' + folder + '/*.mp3')
         for file in files_in_folder:
             base_filename = splitext(basename(file))[0]
