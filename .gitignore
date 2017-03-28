@@ -87,3 +87,6 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+runner.py-oauth2.json
+.idea
