@@ -15,6 +15,18 @@ def caseless_equal(left, right):
     return normalize_caseless(left) == normalize_caseless(right)
 
 
+def create_and_upload_video(audio_file, options):
+    base_filename = splitext(basename(audio_file))[0]
+    video_name = base_filename + '.mp4'
+    saved_temp_video = converter.convert_to_mp4(audio_file=audio_file, name=video_name, image_file=options.imageFile)
+    uploaded_video_id = uploader.initialize_upload(youtube, playstlist_title=options.playlistTitle,
+                                                   file_name=saved_temp_video, category=options.category,
+                                                   privacy_status=options.privacyStatus, keywords=options.keywords,
+                                                   title=base_filename)
+    os.remove(saved_temp_video)
+    return uploaded_video_id
+
+
 if __name__ == '__main__':
     argparser.add_argument("--folder", required=True, help="Path of the root directory")
     argparser.add_argument("--playlistTitle",
@@ -27,6 +39,7 @@ if __name__ == '__main__':
     argparser.add_argument("--clientFile", default="client_secret.json", help="Location of the client secret file. See https://developers.google.com/api-client-library/python/auth/web-app")
     argparser.add_argument("--skipFolderRange", default=None,
                            help="Specify the range of folders to skip. Ex: 1..10 or 1,2,4 or abc,cdef,1..100")
+    argparser.add_argument("--uploadAllFiles", default=True, help="Should the script consider to upload all the files inside a folder or consider only the latest one. Defaults to all files.")
     args = argparser.parse_args()
 
     folders_to_skip = []
@@ -36,7 +49,7 @@ if __name__ == '__main__':
             if ".." in unique:
                 start_end = unique.split("..")
                 print start_end
-                folders_to_skip.extend(str(x) for x in range(int(start_end[0]), int(start_end[1])))
+                folders_to_skip.extend(str(x) for x in range(int(start_end[0]), int(start_end[1]) + 1))
             else:
                 folders_to_skip.append(unique)
 
@@ -52,15 +65,11 @@ if __name__ == '__main__':
         if folder in folders_to_skip:
             print 'Skipping folder ' + folder + '\n'
             continue
-        files_in_folder = glob.glob(path + '/' + folder + '/*.mp3')
-        for file in files_in_folder:
-            base_filename = splitext(basename(file))[0]
-            video_name = base_filename + '.mp4'
-            saved_temp_video = converter.convert_to_mp4(audio_file=file, name=video_name, image_file=args.imageFile)
 
-            uploaded_video_id = uploader.initialize_upload(youtube, playstlist_title=args.playlistTitle,
-                                                           file_name=saved_temp_video, category=args.category,
-                                                           privacy_status=args.privacyStatus, keywords=args.keywords,
-                                                           title=base_filename)
-
-            os.remove(saved_temp_video)
+        if not args.uploadAllFiles:
+            file = max(files_in_folder = glob.glob(path + '/' + folder + '/*.mp3'), key=os.path.getctime)
+            create_and_upload_video(file, args)
+        else:
+            files_in_folder = glob.glob(path + '/' + folder + '/*.mp3')
+            for file in files_in_folder:
+                create_and_upload_video(file, args)
