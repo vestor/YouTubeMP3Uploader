@@ -22,7 +22,7 @@ def create_and_upload_video(audio_file, options, folder_name):
     uploaded_video_id = uploader.initialize_upload(youtube, playstlist_title=options.playlistTitle,
                                                    file_name=saved_temp_video, category=options.category,
                                                    privacy_status=options.privacyStatus, keywords=options.keywords,
-                                                   title=base_filename)
+                                                   title=folder_name)
     os.remove(saved_temp_video)
     return uploaded_video_id
 
