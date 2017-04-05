@@ -15,9 +15,9 @@ def caseless_equal(left, right):
     return normalize_caseless(left) == normalize_caseless(right)
 
 
-def create_and_upload_video(audio_file, options):
+def create_and_upload_video(audio_file, options, folder_name):
     base_filename = splitext(basename(audio_file))[0]
-    video_name = base_filename + '.mp4'
+    video_name = folder_name + '.mp4'
     saved_temp_video = converter.convert_to_mp4(audio_file=audio_file, name=video_name, image_file=options.imageFile)
     uploaded_video_id = uploader.initialize_upload(youtube, playstlist_title=options.playlistTitle,
                                                    file_name=saved_temp_video, category=options.category,
@@ -39,6 +39,8 @@ if __name__ == '__main__':
     argparser.add_argument("--clientFile", default="client_secret.json", help="Location of the client secret file. See https://developers.google.com/api-client-library/python/auth/web-app")
     argparser.add_argument("--skipFolderRange", default=None,
                            help="Specify the range of folders to skip. Ex: 1..10 or 1,2,4 or abc,cdef,1..100")
+    argparser.add_argument("--startingFolder", default=None,
+                           help="Specify the folder number to start from. Ex. 1")
     argparser.add_argument("--uploadAllFiles", default=True, help="Should the script consider to upload all the files inside a folder or consider only the latest one. Defaults to all files.")
     args = argparser.parse_args()
 
@@ -52,6 +54,9 @@ if __name__ == '__main__':
                 folders_to_skip.extend(str(x) for x in range(int(start_end[0]), int(start_end[1]) + 1))
             else:
                 folders_to_skip.append(unique)
+
+    if args.startingFolder:
+        folders_to_skip.extend(str(x) for x in range(int(args.startingFolder) + 1))
 
     if not os.path.exists(args.folder):
         exit("Please specify a valid file using the --folder= parameter.")
@@ -68,8 +73,8 @@ if __name__ == '__main__':
 
         if not args.uploadAllFiles:
             file = max(files_in_folder = glob.glob(path + '/' + folder + '/*.mp3'), key=os.path.getctime)
-            create_and_upload_video(file, args)
+            create_and_upload_video(file, args, folder)
         else:
             files_in_folder = glob.glob(path + '/' + folder + '/*.mp3')
             for file in files_in_folder:
-                create_and_upload_video(file, args)
+                create_and_upload_video(file, args, folder)
